@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <record id="product_template_form_inherited" model="ir.ui.view">
+            <field name="name">product.template.form inherited</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_only_form_view" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <button 
+                        string="Create Product in Shopify" 
+                        type="object" 
+                        groups="base.group_erp_manager" 
+                        name="action_create_shopify_product" 
+                        attrs="{'invisible': ['|',('marketplace_type', '!=', 'shopify'),('shopify_id', '!=', False)]}"/>
+                    <button 
+                        string="Update in Shopify" 
+                        type="object" 
+                        groups="base.group_erp_manager" 
+                        name="action_update_shopify_product" 
+                        attrs="{'invisible': [ '|', ('marketplace_type', '!=', 'shopify'),('shopify_id', '=', False) ]}"/>
+                </xpath>
+
+                <xpath expr="//notebook" position="inside">
+                    <page string="Shopify" >
+                        <group>
+                            <group>
+                                <field name="shopify_id"/>
+                                <field name="marketplace_type" />
+                                <field name="shopify_categ_ids"/>
+                                <field name="shopify_type" readonly="True"/>
+                                <field name="custom_option" readonly="True"/>
+                                <field name="shopify_vendor"/>
+                                <field name="shopify_published_scope" string="Published Scope" readonly="True"/>
+                                <field name="shopify_tags" string="Tags" readonly="True"/>
+                                <field name="shopify_template_suffix" string="Template Suffix" readonly="True"/>
+                                <field name="shopify_variants" string="Variants" readonly="True"/>
+                                <field name="company_id"/>
+                            </group>
+                            <group>
+                                <field name="shopify_compare_price"/>
+                                <field name="shopify_charge_tax"/>
+                                <field name="shopify_track_qty"/>
+                                <field name="shopify_product_status" widget="radio"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    
+        <record id="product_normal_form_view_shopify" model="ir.ui.view">
+            <field name="name">product.product.form shopify</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_normal_form_view" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <button 
+                        string="Create Product in Shopify" 
+                        type="object" 
+                        groups="base.group_erp_manager" 
+                        name="action_create_shopify_product" 
+                        attrs="{'invisible': [('shopify_id', '!=', False)]}"/>
+                    <button 
+                        string="Update in Shopify" 
+                        type="object" 
+                        groups="base.group_erp_manager" 
+                        name="action_update_shopify_product" 
+                        attrs="{'invisible': [('marketplace_type', '!=', 'shopify'),('shopify_id', '=', False) ]}"/>
+                </xpath>
+                <xpath expr="//notebook" position="inside">
+                    <page string="Shopify" >
+                        <group>
+                            <group>
+                                <field name="shopify_id"/>
+                                <field name="marketplace_type"/>
+                                <field name="shopify_categ_ids"/>
+                            </group>
+                            <group>
+                                <field name="shopify_type"/>
+                                <field name="custom_option"/>
+                                <field name="shopify_vendor"/>
+                            </group>
+                            <group>
+                                <field name="shopify_published_scope" string="Published Scope"/>
+                                <field name="shopify_tags" string="Tags"/>
+                                <field name="shopify_template_suffix" string="Template Suffix"/>
+                                <field name="shopify_variants" string="Variants"/>
+                                <field name="company_id"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+     <record id="product_variant_easy" model="ir.ui.view">
+            <field name="name">product.product.view.form.inherit</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="account.product_template_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='invoicing']//group[@name='accounting']" position="inside">
+                    <group string="Shopify">
+                        <field name="marketplace_type" />
+                        <field name="shopify_id" />
+                        <field name="shopify_image_id" />
+                    </group>
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>
