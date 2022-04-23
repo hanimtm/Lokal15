@@ -256,9 +256,9 @@ class OrderFetchWizard(models.Model):
                                                                         url=url,
                                                                         type=type_req)
 
-        if url and order_list:
-            _logger.info("\nurl >>>>>>>>>>>>>>>>>>>>>>" + str(url) +
-                         "\nOrder #:--->" + str(len(order_list.get('orders'))))
+        # if url and order_list:
+        #     _logger.info("\nurl >>>>>>>>>>>>>>>>>>>>>>" + str(url) +
+        #                  "\nOrder #:--->" + str(len(order_list.get('orders'))))
 
         try:
             sp_orders = order_list['orders']
@@ -422,7 +422,7 @@ class OrderFetchWizard(models.Model):
                                                 ('name', '=', variants['weight_unit'])], limit=1)
                                             prod_vals = {
                                                 'categ_id': prod_tmpl.categ_id.id,
-                                                'name': sp_product_list[0]['body_html'],
+                                                'name': sp_product_list[0]['title'],
                                                 'product_tmpl_id': prod_tmpl.id,
                                                 'type': 'product',
                                                 'uom_id': uom_id.id,
@@ -462,8 +462,11 @@ class OrderFetchWizard(models.Model):
                             if line.get("discount_allocations") and float(line.get('total_discount')) == 0:
                                 for da in line.get("discount_allocations"):
                                     discount += float(da.get('amount'))
-                                disc_per = (float(
-                                    discount) / (float(line.get("price")) * line.get("fulfillable_quantity")) * 100)
+                                disc_per = 0
+                                if float(line.get("price")) > 0 and line.get("fulfillable_quantity") > 0:
+                                    disc_per = (float(
+                                        discount) / (float(line.get("price")) * line.get("fulfillable_quantity")) * 100)
+
                                 ICPSudo = self.env['ir.config_parameter'].sudo(
                                 )
                                 group_dicnt = ICPSudo.get_param(
@@ -498,7 +501,6 @@ class OrderFetchWizard(models.Model):
                     order_vals = self._get_delivery_line(
                         i, order_vals, marketplace_instance_id)
                     # Other Values
-
                     order_vals['shopify_status'] = i.get('status', '')
                     order_vals['shopify_order_date'] = i.get('created_at').split(
                         "T")[0] + " " + i.get('created_at').split("T")[1][:8]

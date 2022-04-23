@@ -52,6 +52,7 @@ class SaleOrderShopify(models.Model):
                    ('authorized', 'Authorized'),
                    ('partially_paid', 'Partially Paid'),
                    ('paid', 'Paid'),
+                   ('refunded', 'Refunded'),
                    ('partially_refunded', 'Partially Refunded'),
                    ('voided', 'Voided')
                    ], default='pending'

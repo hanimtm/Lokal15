@@ -51,15 +51,6 @@ class ProductsFetchWizard(models.Model):
                                       template,
                                       attributes
                                       ):
-        """
-            The aim of this function is to configure all the
-            configurable products with their variants
-            config_products: configurable products list from shopify with their childs
-            existing_prod_ids: products synced with shopify
-            template: required fields with their values for product template
-            attributes: complete list of attributes from shopify
-        """
-
         VariantObj = self.env['product.product']
         cr = self._cr
         # fetching all the attributes and their values
@@ -114,20 +105,18 @@ class ProductsFetchWizard(models.Model):
 
         _logger.info("START===>>>")
         for product in config_products:
-            _logger.info("product===>>>%s", product.get('id'))
             if str(product['id']) not in existing_prod_ids:
                 try:
-                    print('Vendor :: ', product.get('vendor'))
-
-                    vendor = self.env['res.partner'].search([('name','=',product.get('vendor'))])
+                    vendor = self.env['res.partner'].search([('name', '=', product.get('vendor'))])
                     if not vendor:
-                        vendor = self.env['res.partner'].create({'name': product.get('vendor'),'marketplace_type':'shopify'})
+                        vendor = self.env['res.partner'].create(
+                            {'name': product.get('vendor'), 'marketplace_type': 'shopify'})
+                        _logger.info("Vendor11 :: ", vendor)
+
                     product_categ_ids = []
                     if product.get('product_type'):
                         product_categ_ids = [product.get('product_type')] or []
 
-                    # getting odoo's category id from the shopify categ id
-                    # (which is already created)
                     c_ids = []
                     if product_categ_ids:
                         cr.execute("select name from product_category "
@@ -135,18 +124,13 @@ class ProductsFetchWizard(models.Model):
                                    (tuple(product_categ_ids),))
                         c_ids = cr.fetchall()
 
+
                     template['name'] = product['title']
                     template['shopify_id'] = str(product['id'])
-                    # Product Type
-                    # [consu] Consumable
-                    # [service] Service
-                    # [product] Storable
                     template['type'] = 'product'
-                    template['active'] = True if product.get(
-                        'status') == 'active' else False
+                    template['active'] = True if product.get('status') == 'active' else False
                     template['active'] = True
                     template['sale_ok'] = True
-                    # template['shopify_vendor'] = product.get('vendor')
                     template['shopify_vendor'] = vendor.id
                     template['purchase_ok'] = True
                     template['marketplace_type'] = 'shopify'
@@ -187,22 +171,23 @@ class ProductsFetchWizard(models.Model):
                             template['categ_id'] = categ_id.id
 
                     # creating products
+
+                    _logger.info("product.template ===>>> %s", str(product['id']))
+
                     product_tmpl_id = self.env['product.template'].sudo().search(
                         [('shopify_id', '=', str(product['id']))])
-
+                    _logger.info("product_tmpl_id ===>>> %s", product_tmpl_id)
                     if product_tmpl_id:
+
                         pro_tmpl = self.env['product.template'].browse(
                             product_tmpl_id.id)
                         product_tmpl_id = [product_tmpl_id.id]
 
                     else:
                         template = self.shopify_process_options(product, template)
-                        print('Template :: ', template)
                         pro_tmpl = self.env['product.template'].sudo().create(template)
                         product_tmpl_id = [pro_tmpl.id]
 
-                    _logger.info("\nproduct_tmpl_id-->" + str(product_tmpl_id))
-                    _logger.info("\npro_tmpl-->" + str(pro_tmpl))
 
                     image_file = False
 
@@ -217,6 +202,8 @@ class ProductsFetchWizard(models.Model):
                             _logger.info(
                                 "unable to import image url of product sku %s", product.get('sku'))
 
+                    _logger.info(
+                        "Variants are ::: %s", product.get('variants'))
                     if product.get('variants'):
                         # here we create template for main product and variants for
                         # the child products
@@ -242,6 +229,9 @@ class ProductsFetchWizard(models.Model):
                             # we are updating the attributes associated with this product
                             # (if it is not added to odoo already)
 
+                            _logger.warning(
+                                "variants ::: " % product.get('variants'))
+
                             options = product.get('options')
                             for option in options:
                                 option['attribute_id'] = option.get('id')
@@ -256,6 +246,10 @@ class ProductsFetchWizard(models.Model):
                             child_file = False
 
                             for child in product['variants']:
+
+                                _logger.warning(
+                                    "child ::: " % child)
+
                                 variant_categ_ids = []
                                 variant_att_vals = []
 
@@ -274,23 +268,6 @@ class ProductsFetchWizard(models.Model):
                                     att_code = attributes_list[att_id]['code']
                                     att_options = attributes_list[att_id]['options']
 
-                                    # if child.get('custom_attributes'):
-                                    #     for att in child.get('custom_attributes'):
-                                    #         if att['attribute_code'] =='image':
-                                    #             child_file = att['value']
-                                    #         if att['attribute_code'] == att_code:
-                                    #             variant_att_vals.append(
-                                    #                 att_options[att['value']])
-                                    #             attrib_line[current_att_id].append(
-                                    #                 att_options[att['value']]) \
-                                    #                 if att_options[att['value']] not in \
-                                    #                 attrib_line[current_att_id] \
-                                    #                 else None
-                                    #         elif att[
-                                    #             'attribute_code'] == 'category_ids':
-                                    #             variant_categ_ids = attr.get(
-                                    #                 'value') or []
-
                                     att_code_id = self.env['product.attribute'].sudo().search(
                                         [('name', '=', att_code)])
                                     if att_code_id:
@@ -299,7 +276,6 @@ class ProductsFetchWizard(models.Model):
                                                 attrib_line[key] = [
                                                     value for key, value in att_options.items()]
 
-                                    print(attrib_line)
                                     att_values = []
                                     if att_options:
                                         for key, value in att_options.items():
@@ -310,13 +286,6 @@ class ProductsFetchWizard(models.Model):
                                 # attribute_id-->product.attribue
                                 for line in attrib_line:
                                     if attrib_line[line]:
-                                        # cr.execute(
-                                        #     "insert into product_template_attribute_line "
-                                        #     "(attribute_id, product_tmpl_id, value_ids) "
-                                        #     "values(%s, %s. %s) returning id",
-                                        #     (line, product_tmpl_id[0], tuple(attrib_line[line])))
-                                        # line_id = cr.fetchone()
-
                                         line_arr = [line] if type(
                                             line) == int else line
                                         domain = [('attribute_id', 'in', line_arr),
@@ -326,9 +295,6 @@ class ProductsFetchWizard(models.Model):
                                         line_rec = self.env['product.template.attribute.line'].search(
                                             domain)
                                         if not line_rec:
-                                            print("product_tmpl_id")
-                                            print(product_tmpl_id)
-
                                             Ptal = self.env['product.template.attribute.line'].sudo(
                                             )
                                             line_values = {
@@ -336,9 +302,6 @@ class ProductsFetchWizard(models.Model):
                                                 'product_tmpl_id': product_tmpl_id[0],
                                                 'value_ids': [(6, 0, attrib_line[line])]
                                             }
-                                            print("line_values")
-                                            print(line_values)
-                                            print("Error Here")
                                             line_rec = Ptal.create(line_values)
 
                                 # creating variants
@@ -373,19 +336,15 @@ class ProductsFetchWizard(models.Model):
                                                  (str(exit_prod_id)))
 
                                     # Search the Product with Attribute Values
-                                    print(option_names)
                                     pro_var = VariantObj.sudo().search([
                                         ('product_tmpl_id', '=',
                                          product_tmpl_id[0]),
-                                        # ('marketplace_type','=', 'shopify'),
+                                        ('marketplace_type', '=', 'shopify'),
                                     ])
 
                                     pro_var_flag = False
                                     if pro_var:
-                                        print("pro_var")
                                         for prod in pro_var:
-                                            print(
-                                                prod.product_template_attribute_value_ids)
                                             if len(prod.product_template_attribute_value_ids) > 0:
                                                 if prod.product_template_attribute_value_ids[0].name == child.get(
                                                         'title'):
@@ -556,14 +515,13 @@ class ProductsFetchWizard(models.Model):
         template['attribute_line_ids'] = []
         if product.get('options'):
             oprions = product.get('options')
-            print('Options :: ',oprions)
+            _logger.info("oprions --> %s", str(oprions))
             for option in oprions:
                 PA = self.env['product.attribute']
                 attribute_name = option.get('name')
                 attribute_id = PA.sudo().search(
                     [('name', '=', option.get('name'))])
-                print('attribute_id :: ', attribute_id)
-
+                _logger.info("attribute_id --> %s", attribute_id)
                 if not attribute_id:
                     """Create Attribute"""
                     attribute_id = PA.sudo().create({
@@ -574,29 +532,41 @@ class ProductsFetchWizard(models.Model):
 
                 values_ids = []
                 values = option.get('values')
-                print('values :: ', values)
+
+                _logger.info("values --> %s", values)
+
                 for value in values:
                     PTV = self.env['product.attribute.value']
                     valud_id = PTV.sudo().search(
                         [('name', '=', value)])
-                    print('valud_id :: ', valud_id)
+
+                    _logger.info("valud_id --> %s", valud_id)
 
                     if not valud_id:
-                        valud_id = PTV.sudo().create({
-                            'attribute_id': attribute_id.id,
-                            'marketplace_type': 'shopify',
-                            'name': value,
-                        })
-                    values_ids.append(valud_id.id)
+                        for att in attribute_id:
+                            already = PTV.sudo().search(
+                                [('name', '=', value)])
+                            _logger.info("already --> %s", already)
+                            if not already:
 
-                attribute_id.write({'value_ids': values_ids}) if value not in attribute_id.value_ids.mapped(
-                    'name') else None
+                                valud_id = PTV.sudo().create({
+                                    'attribute_id': att.id,
+                                    'marketplace_type': 'shopify',
+                                    'name': value,
+                                })
+                                values_ids.append(valud_id.id)
+                    _logger.info("values_ids --> %s", valud_id)
 
-            template['attribute_line_ids'].append(
-                [0, 0,
-                 {'attribute_id': attribute_id.id,
-                  'value_ids': [[6, 0, values_ids]]}
-                 ])
+            for att in attribute_id:
+                if value not in attribute_id.value_ids.mapped('name'):
+                    att.write({'value_ids': values_ids})
+
+            for att in attribute_id:
+                template['attribute_line_ids'].append(
+                    [0, 0,
+                     {'attribute_id': att.id,
+                      'value_ids': [[6, 0, values_ids]]}
+                     ])
 
         return template
 
@@ -883,7 +853,6 @@ class ProductsFetchWizard(models.Model):
 
             tmpl_vals = self.find_default_vals('product.template')
             simple_products_list = []
-            print('configurable_products :: ', configurable_products)
             if configurable_products.get('products'):
                 sp_product_list = configurable_products.get('products')
             else:
@@ -891,8 +860,6 @@ class ProductsFetchWizard(models.Model):
                     configurable_products.get('products')) != list else configurable_products.get('products')
 
             update_products_no = len(sp_product_list)
-
-            print(sp_product_list)
 
             for con_pro in sp_product_list:
                 if con_pro.get('product_type') not in categ_list and con_pro.get('product_type') != '':
