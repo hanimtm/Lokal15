@@ -107,11 +107,46 @@ class ProductsFetchWizard(models.Model):
         for product in config_products:
             if str(product['id']) not in existing_prod_ids:
                 try:
-                    vendor = self.env['res.partner'].search([('name', '=', product.get('vendor'))])
+                    desginers_list = False
+                    marketplace_instance_id = self._get_instance_id()
+                    if marketplace_instance_id.designer_api_token:
+                        desginers_list = marketplace_instance_id.designer_api_call()
+
+                    vendor = self.env['res.partner'].search([('name', '=', product.get('vendor'))], limit=1)
+
                     if not vendor:
                         vendor = self.env['res.partner'].create(
                             {'name': product.get('vendor'), 'marketplace_type': 'shopify'})
                         _logger.info("Vendor11 :: ", vendor)
+                    if desginers_list:
+                        lst = desginers_list['designers']
+                        for designer in lst:
+
+                            if designer['display_name'] == vendor.name:
+                                vendor.sudo().write({
+                                    'email': designer['email'],
+                                    'phone': designer['phone_number'],
+                                    'street': designer['address'] if designer['address'] != None else '',
+                                    'city': designer['city'] if designer['city'] != None else '',
+                                    'zip': designer['postal_code'] if designer['postal_code'] != None else '',
+                                    'bank_receiver_name': designer['bank_info']['receiver_name'] if designer['bank_info'][
+                                                                                                    'receiver_name'] != None else '',
+                                    'bank_name': designer['bank_info']['bank_name'] if designer['bank_info'][
+                                                                                           'bank_name'] != None else '',
+                                    'bank_account_number': designer['bank_info']['account_number'] if
+                                    designer['bank_info']['account_number'] != None else '',
+                                    'bank_swift_code': designer['bank_info']['swift_code'] if designer['bank_info'][
+                                                                                                  'swift_code'] != None else '',
+                                    'bank_iban': designer['bank_info']['iban'] if designer['bank_info'][
+                                                                                      'iban'] != None else '',
+                                    'bank_address': designer['bank_info']['address'] if designer['bank_info'][
+                                                                                            'address'] != None else '',
+                                    'bank_bic': designer['bank_info']['bic'] if designer['bank_info'][
+                                                                                    'bic'] != None else '',
+                                    'bank_sort_code': designer['bank_info']['sort_code'] if designer['bank_info'][
+                                                                                                'sort_code'] != None else '',
+                                })
+                                break
 
                     product_categ_ids = []
                     if product.get('product_type'):
@@ -123,7 +158,6 @@ class ProductsFetchWizard(models.Model):
                                    "where name in %s",
                                    (tuple(product_categ_ids),))
                         c_ids = cr.fetchall()
-
 
                     template['name'] = product['title']
                     template['shopify_id'] = str(product['id'])
@@ -146,7 +180,7 @@ class ProductsFetchWizard(models.Model):
                         len(product.get('variants')))
 
                     # -------------------------------------Invoice Policy------------------------------------------------
-                    marketplace_instance_id = self._get_instance_id()
+
                     if marketplace_instance_id.default_invoice_policy:
                         template['invoice_policy'] = marketplace_instance_id.default_invoice_policy
                     if marketplace_instance_id.sync_price == True:
@@ -187,7 +221,6 @@ class ProductsFetchWizard(models.Model):
                         template = self.shopify_process_options(product, template)
                         pro_tmpl = self.env['product.template'].sudo().create(template)
                         product_tmpl_id = [pro_tmpl.id]
-
 
                     image_file = False
 
@@ -548,7 +581,6 @@ class ProductsFetchWizard(models.Model):
                                 [('name', '=', value)])
                             _logger.info("already --> %s", already)
                             if not already:
-
                                 valud_id = PTV.sudo().create({
                                     'attribute_id': att.id,
                                     'marketplace_type': 'shopify',

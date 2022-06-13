@@ -22,7 +22,7 @@
                                 <!-- <field name="property_payment_method_id" /> -->
                             </group>
                         </group>
-                        <group attrs="{  'invisible': [('marketplace_type','!=','shopify')]  }">
+                        <group attrs="{'invisible': [('marketplace_type','!=','shopify')]  }">
                             <group>
                                 <h3>Shopify IDS</h3>
                                 <field name="shopify_id" string="Shopify Id"/>
@@ -50,6 +50,17 @@
                             <group>
                                 <h3>Vendor Commission</h3>
                                 <field name="shopify_commission"/>
+                            </group>
+                            <group>
+                                <h3>Vendor Bank Account</h3>
+                                <field name="bank_receiver_name"/>
+                                <field name="bank_name"/>
+                                <field name="bank_account_number"/>
+                                <field name="bank_swift_code"/>
+                                <field name="bank_iban"/>
+                                <field name="bank_address"/>
+                                <field name="bank_bic"/>
+                                <field name="bank_sort_code"/>
                             </group>
                         </group>
                     </page>

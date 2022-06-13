@@ -641,7 +641,9 @@ class OrderFetchWizard(models.Model):
                                         current_order_id.name, move_id.name)
                                     _logger.info(msg) if msg else None
                                 if move_id and move_id.state == 'draft' and i.get('financial_status') in ['authorized',
-                                                                                                          'paid']:
+                                                                                                         'paid']:
+                                    if not move_id.invoice_date:
+                                        move_id.write({'invoice_date': current_order_id.date_order})
                                     move_id.action_post()
                                 payments = self._shopify_process_payments(
                                     move_id, i)

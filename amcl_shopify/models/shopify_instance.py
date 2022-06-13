@@ -4,7 +4,7 @@ import pprint
 from odoo import models, fields, api, _
 import requests
 from odoo.exceptions import UserError, ValidationError
-
+import json
 import logging
 _logger = logging.getLogger(__name__)
 class ModelName(models.Model):
@@ -18,7 +18,8 @@ class ModelName(models.Model):
     marketplace_webhook = fields.Boolean(
         string='Use Webhook?',
     )
-    
+    designer_api_token = fields.Char(string='Designer API Link with Token')
+
     @api.onchange('marketplace_host')
     def _onchange_marketplace_host(self):
         if self.marketplace_host and 'https://' in str(self.marketplace_host):
@@ -133,8 +134,22 @@ class ModelName(models.Model):
     #                     ('deprecated', '=', False),
     #                 ], limit=1)
 
+    def designer_api_call(self, **kwargs):
 
+        type = kwargs.get('type') or 'GET'
+        complete_url = self.designer_api_token
+        _logger.info("%s", complete_url)
 
+        try:
+            res = requests.request(type, complete_url)
+            if res.status_code != 200:
+                _logger.warning(_("Error:" + str(res.text)))
+            items = json.loads(res.text) if res.status_code == 200 else {'errors':res.text if res.text != '' else 'Error: Empty response from Shopify\nResponse Code: %s' %(res.status_code)}
+            _logger.info("Designer==>>>" + pprint.pformat(items))
+            return items
+        except Exception as e:
+            _logger.info("Exception occured %s", e)
+            raise UserError(_("Error Occured 5 %s") % e)
     
     def action_check_acess(self):
         url = self.marketplace_host + "/admin/oauth/access_scopes.json"

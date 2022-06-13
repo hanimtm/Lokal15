@@ -83,6 +83,16 @@ class ResPartner(models.Model):
     shopify_default = fields.Boolean(default=False)
     shopify_commission = fields.Float('Shopify Commission %')
 
+    bank_receiver_name = fields.Char('Receiver Bank')
+    bank_name = fields.Char('Bank Name')
+    bank_account_number = fields.Char('Account Number')
+    bank_swift_code = fields.Char('Swift Code')
+    bank_iban = fields.Char('Iban')
+    bank_address = fields.Char('Bank Address')
+    bank_bic = fields.Char('Bank BIC')
+    bank_sort_code = fields.Char('Bank Sort Code')
+
+
     def create_shopify_customer(self):
         """
             Button Name: Create Shopify Customer

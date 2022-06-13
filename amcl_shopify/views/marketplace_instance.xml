@@ -44,6 +44,9 @@
                     <field name="marketplace_api_password" />
                     <field name="marketplace_api_version"  attrs="{'required': [ ('marketplace_is_shopify', '=', 'shopify' )]}"/>
                   </group>
+                  <group string="Other APIs">
+                    <field name="designer_api_token"/>
+                  </group>
                 </group>
               </page>
 
