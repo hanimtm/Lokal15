@@ -129,8 +129,9 @@ class ProductsFetchWizard(models.Model):
                                     'street': designer['address'] if designer['address'] != None else '',
                                     'city': designer['city'] if designer['city'] != None else '',
                                     'zip': designer['postal_code'] if designer['postal_code'] != None else '',
-                                    'bank_receiver_name': designer['bank_info']['receiver_name'] if designer['bank_info'][
-                                                                                                    'receiver_name'] != None else '',
+                                    'bank_receiver_name': designer['bank_info']['receiver_name'] if
+                                    designer['bank_info'][
+                                        'receiver_name'] != None else '',
                                     'bank_name': designer['bank_info']['bank_name'] if designer['bank_info'][
                                                                                            'bank_name'] != None else '',
                                     'bank_account_number': designer['bank_info']['account_number'] if
@@ -796,6 +797,46 @@ class ProductsFetchWizard(models.Model):
                 [('id', '=', marketplace_instance_id[0])])
             kwargs = {'marketplace_instance_id': marketplace_instance_id}
             self.shopify_fetch_products_to_odoo(kwargs)
+
+            desginers_list = False
+            marketplace_instance_id = self._get_instance_id()
+            if marketplace_instance_id.designer_api_token:
+                desginers_list = marketplace_instance_id.designer_api_call()
+
+            for product in self.env['product.product'].search([('shopify_vendor', '!=', False)]):
+                vendor = product.shopify_vendor
+                if desginers_list:
+                    lst = desginers_list['designers']
+                    for designer in lst:
+                        if designer['display_name'] == vendor.name:
+
+                            print('HERE !!!!')
+                            vendor.sudo().write({
+                                'email': designer['email'],
+                                'phone': designer['phone_number'],
+                                'street': designer['address'] if designer['address'] != None else '',
+                                'city': designer['city'] if designer['city'] != None else '',
+                                'zip': designer['postal_code'] if designer['postal_code'] != None else '',
+                                'bank_receiver_name': designer['bank_info']['receiver_name'] if
+                                designer['bank_info'][
+                                    'receiver_name'] != None else '',
+                                'bank_name': designer['bank_info']['bank_name'] if designer['bank_info'][
+                                                                                       'bank_name'] != None else '',
+                                'bank_account_number': designer['bank_info']['account_number'] if
+                                designer['bank_info']['account_number'] != None else '',
+                                'bank_swift_code': designer['bank_info']['swift_code'] if designer['bank_info'][
+                                                                                              'swift_code'] != None else '',
+                                'bank_iban': designer['bank_info']['iban'] if designer['bank_info'][
+                                                                                  'iban'] != None else '',
+                                'bank_address': designer['bank_info']['address'] if designer['bank_info'][
+                                                                                        'address'] != None else '',
+                                'bank_bic': designer['bank_info']['bic'] if designer['bank_info'][
+                                                                                'bic'] != None else '',
+                                'bank_sort_code': designer['bank_info']['sort_code'] if designer['bank_info'][
+                                                                                            'sort_code'] != None else '',
+                            })
+
+
 
         elif self.fetch_type == 'from_odoo':
             # update products to shopify
